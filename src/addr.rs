@@ -47,9 +47,7 @@ pub fn client_bind_addr(target: &SocketAddr) -> SocketAddr {
 /// Strip surrounding brackets from an address, useful for portless protocols
 /// that accept both `::1` and `[::1]`.
 pub fn strip_brackets(host: &str) -> &str {
-  host.strip_prefix('[')
-    .and_then(|s| s.strip_suffix(']'))
-    .unwrap_or(host)
+  host.strip_prefix('[').and_then(|s| s.strip_suffix(']')).unwrap_or(host)
 }
 
 #[cfg(test)]

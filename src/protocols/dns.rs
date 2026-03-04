@@ -31,7 +31,11 @@ pub async fn run(
   verbose: bool,
 ) -> Result<(), NetError> {
   let name = crate::addr::strip_brackets(&args.name).to_string();
-  let server = args.server.as_deref().map(crate::addr::strip_brackets).map(String::from);
+  let server = args
+    .server
+    .as_deref()
+    .map(crate::addr::strip_brackets)
+    .map(String::from);
 
   let is_reverse = name.parse::<IpAddr>().ok();
   let record_type = if is_reverse.is_some() {

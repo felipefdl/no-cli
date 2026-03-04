@@ -264,17 +264,11 @@ mod tests {
 
   #[test]
   fn ipv6_ula_gets_http() {
-    assert_eq!(
-      normalize_url("fd00::1", UrlScheme::Http),
-      "http://fd00::1"
-    );
+    assert_eq!(normalize_url("fd00::1", UrlScheme::Http), "http://fd00::1");
   }
 
   #[test]
   fn ipv6_link_local_gets_ws() {
-    assert_eq!(
-      normalize_url("fe80::1", UrlScheme::Ws),
-      "ws://fe80::1"
-    );
+    assert_eq!(normalize_url("fe80::1", UrlScheme::Ws), "ws://fe80::1");
   }
 }

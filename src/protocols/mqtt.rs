@@ -37,9 +37,13 @@ fn parse_broker(broker: &str) -> Result<(String, u16), NetError> {
   // Bracketed IPv6: [::1]:1883 or [::1]
   if let Some(rest) = url.strip_prefix('[') {
     if let Some((host, port_str)) = rest.split_once("]:") {
-      let port = port_str
-        .parse::<u16>()
-        .map_err(|_| NetError::new(ErrorCode::InvalidInput, format!("invalid port: {port_str}"), Protocol::Mqtt))?;
+      let port = port_str.parse::<u16>().map_err(|_| {
+        NetError::new(
+          ErrorCode::InvalidInput,
+          format!("invalid port: {port_str}"),
+          Protocol::Mqtt,
+        )
+      })?;
       return Ok((host.to_string(), port));
     }
     let host = rest.trim_end_matches(']');
