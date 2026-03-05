@@ -9,7 +9,7 @@ Project conventions and architecture reference for `no`, the AI-first networking
 `no` is a networking CLI tool written in Rust. It supports multiple protocols (HTTP, WebSocket, TCP, MQTT, SSE, UDP, DNS, Ping, WHOIS) with a consistent structured output format suited for both human-readable display and machine consumption.
 
 - **Binary name:** `no`
-- **Package name:** `no-cli`
+- **Package name:** `network-output`
 - **Crate edition:** 2024
 - **Minimum Rust version:** 1.85.0
 
@@ -39,7 +39,7 @@ src/
     whois.rs           -- WHOIS lookup handler (raw TCP to port 43)
 docs/
   index.html           -- Documentation website (single self-contained file, inline CSS + JS)
-  CNAME                -- GitHub Pages custom domain (no-cli.net)
+  CNAME                -- GitHub Pages custom domain (network-output.com)
 tests/
   helpers/             -- Test infrastructure (servers, CLI helpers)
   http.rs              -- HTTP integration tests (22)
@@ -372,6 +372,19 @@ All common tasks are defined in `justfile`. Run `just` with no arguments to list
 - Run `cargo clippy -- -D warnings`; all warnings are treated as errors
 - `rustfmt` settings: `max_width = 120`, `tab_spaces = 2` (see `rustfmt.toml`)
 
+### No panicking calls in production code
+
+Never use `.unwrap()`, `.expect()`, `panic!()`, `todo!()`, or `unimplemented!()` in non-test code. These crash the process and are unacceptable in a CLI tool. Use proper error handling instead:
+
+- Propagate errors with `?` when the caller returns `Result`
+- Use `.ok()` to silently discard non-critical errors (e.g., stdout writes)
+- Use `.unwrap_or()` / `.unwrap_or_default()` / `.unwrap_or_else()` when a fallback value is appropriate
+- Use `if let` / `match` for `Option` and `Result` when you need conditional logic
+
+The only exceptions are:
+- Test code (`#[cfg(test)]` modules and `tests/` directory)
+- Compile-time guarantees where the value is a hardcoded constant (use `.expect("reason")` with a clear justification)
+
 ### Code style
 
 - No emojis in code, comments, or output strings
@@ -521,7 +534,7 @@ Exit code 4 on invalid JSON input or invalid jq expression.
 
 ### Website
 
-The documentation site at [no-cli.net](https://no-cli.net) is a single self-contained HTML file at `docs/index.html` with all CSS and JS inlined. It uses a retromodern CRT aesthetic (dark background, phosphor green accents, scanline overlay). GitHub Pages serves the site from the `docs/` directory on the `main` branch.
+The documentation site at [network-output.com](https://network-output.com) is a single self-contained HTML file at `docs/index.html` with all CSS and JS inlined. It uses a retromodern CRT aesthetic (dark background, phosphor green accents, scanline overlay). GitHub Pages serves the site from the `docs/` directory on the `main` branch.
 
 To preview locally:
 

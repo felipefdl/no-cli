@@ -13,7 +13,7 @@ Only the latest release is supported with security updates.
 
 **Do not open a public issue for security vulnerabilities.**
 
-Please report vulnerabilities through [GitHub's private security advisory feature](https://github.com/felipefdl/no-cli/security/advisories/new).
+Please report vulnerabilities through [GitHub's private security advisory feature](https://github.com/felipefdl/no/security/advisories/new).
 
 Include as much detail as possible:
 

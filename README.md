@@ -1,13 +1,13 @@
-# no (network output)
+# no (network-output)
 
 A fast, structured networking CLI for HTTP, WebSocket, TCP, UDP, MQTT, SSE, DNS, Ping, and WHOIS.
 
-**Docs:** [no-cli.net](https://no-cli.net)
+**Docs:** [network-output.com](https://network-output.com)
 
 ## Installation
 
 ```sh
-cargo install no-cli
+cargo install network-output
 ```
 
 Or build from source:
@@ -166,7 +166,7 @@ JSON output follows a consistent envelope:
 
 ## Documentation
 
-Full documentation is available at [no-cli.net](https://no-cli.net), covering all protocols, output format, global flags, exit codes, environment variables, and URL normalization rules.
+Full documentation is available at [network-output.com](https://network-output.com), covering all protocols, output format, global flags, exit codes, environment variables, and URL normalization rules.
 
 API documentation can be generated with:
 

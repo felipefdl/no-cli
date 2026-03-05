@@ -204,8 +204,8 @@ pub fn print_response(response: &NetResponse, mode: OutputMode, no_color: bool) 
 
 fn print_json(response: &NetResponse) {
   let mut stdout = io::stdout().lock();
-  serde_json::to_writer(&mut stdout, response).expect("failed to write JSON");
-  writeln!(stdout).expect("failed to write newline");
+  serde_json::to_writer(&mut stdout, response).ok();
+  writeln!(stdout).ok();
 }
 
 fn print_pretty(response: &NetResponse, no_color: bool) {
