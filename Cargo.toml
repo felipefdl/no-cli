@@ -6,12 +6,12 @@ rust-version = "1.85"
 description = "Networking CLI for HTTP, WebSocket, TCP, UDP, DNS, Ping, WHOIS, MQTT, and SSE. Structured JSON output built for machines, readable by humans."
 license = "Apache-2.0"
 authors = ["Felipe Lima <felipefdl@network-output.com>"]
-repository = "https://github.com/felipefdl/no"
+repository = "https://github.com/network-output/no"
 homepage = "https://network-output.com"
 readme = "README.md"
 keywords = ["cli", "http", "json", "networking", "websocket"]
 categories = ["command-line-utilities", "network-programming"]
-exclude = [".github/", ".claude/", "justfile", "AGENTS.md"]
+exclude = [".github/", ".claude/", "justfile", "AGENTS.md", "npm/", "homebrew/"]
 
 [[bin]]
 name = "no"

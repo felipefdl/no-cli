@@ -1,0 +1,24 @@
+{
+  "name": "network-output",
+  "version": "0.1.0",
+  "description": "Networking CLI for HTTP, WebSocket, TCP, UDP, DNS, Ping, WHOIS, MQTT, and SSE. Structured JSON output built for machines, readable by humans.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/network-output/no"
+  },
+  "homepage": "https://network-output.com",
+  "bin": {
+    "no": "bin/no.js"
+  },
+  "optionalDependencies": {
+    "@network-output/no-darwin-arm64": "0.1.0",
+    "@network-output/no-darwin-x64": "0.1.0",
+    "@network-output/no-linux-arm64": "0.1.0",
+    "@network-output/no-linux-x64": "0.1.0",
+    "@network-output/no-linux-arm64-musl": "0.1.0",
+    "@network-output/no-linux-x64-musl": "0.1.0",
+    "@network-output/no-win32-arm64": "0.1.0",
+    "@network-output/no-win32-x64": "0.1.0"
+  }
+}

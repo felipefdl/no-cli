@@ -6,11 +6,35 @@ A fast, structured networking CLI for HTTP, WebSocket, TCP, UDP, MQTT, SSE, DNS,
 
 ## Installation
 
+### Cargo
+
 ```sh
 cargo install network-output
 ```
 
-Or build from source:
+### Homebrew
+
+```sh
+brew install network-output/tap/network-output
+```
+
+### npm
+
+```sh
+npx network-output
+```
+
+For a permanent install:
+
+```sh
+npm install -g network-output
+```
+
+### GitHub Releases
+
+Download prebuilt binaries from [GitHub Releases](https://github.com/network-output/no/releases).
+
+### Build from source
 
 ```sh
 cargo install --path .

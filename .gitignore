@@ -20,3 +20,7 @@ Desktop.ini
 # Environment
 .env
 .env.*
+
+# npm platform binaries (placed by CI during publish)
+npm/@network-output/*/no
+npm/@network-output/*/no.exe

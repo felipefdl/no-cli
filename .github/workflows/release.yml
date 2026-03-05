@@ -1,0 +1,312 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86_64
+            target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            archive: tar.gz
+            install-deps: libssl-dev pkg-config
+          - name: Linux ARM64
+            target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+            archive: tar.gz
+            install-deps: libssl-dev pkg-config
+          - name: Linux x86_64 musl
+            target: x86_64-unknown-linux-musl
+            runner: ubuntu-latest
+            archive: tar.gz
+            install-deps: musl-tools pkg-config
+            extra-cargo-flags: --features reqwest/native-tls-vendored
+          - name: Linux ARM64 musl
+            target: aarch64-unknown-linux-musl
+            runner: ubuntu-24.04-arm
+            archive: tar.gz
+            install-deps: musl-tools pkg-config
+            extra-cargo-flags: --features reqwest/native-tls-vendored
+          - name: macOS x86_64
+            target: x86_64-apple-darwin
+            runner: macos-15-intel
+            archive: tar.gz
+          - name: macOS ARM64
+            target: aarch64-apple-darwin
+            runner: macos-latest
+            archive: tar.gz
+          - name: Windows x86_64
+            target: x86_64-pc-windows-msvc
+            runner: windows-latest
+            archive: zip
+          - name: Windows ARM64
+            target: aarch64-pc-windows-msvc
+            runner: windows-11-arm
+            archive: zip
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
+
+      - name: Install system dependencies
+        if: matrix.install-deps
+        run: sudo apt-get update && sudo apt-get install -y ${{ matrix.install-deps }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }} ${{ matrix.extra-cargo-flags }}
+
+      - name: Import codesigning certificate
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          CERTIFICATE_PATH=$RUNNER_TEMP/certificate.p12
+          KEYCHAIN_PATH=$RUNNER_TEMP/signing.keychain-db
+          KEYCHAIN_PASSWORD=$(uuidgen)
+
+          echo "$APPLE_CERTIFICATE_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          security import "$CERTIFICATE_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" \
+            -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain-db
+
+      - name: Codesign binary
+        if: runner.os == 'macOS'
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          codesign --sign "Developer ID Application: Felipe Lima ($APPLE_TEAM_ID)" \
+            --options runtime --timestamp \
+            target/${{ matrix.target }}/release/no
+
+      - name: Package (tar.gz)
+        if: matrix.archive == 'tar.gz'
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ARCHIVE="no-v${VERSION}-${{ matrix.target }}.tar.gz"
+          tar -czf "$ARCHIVE" -C target/${{ matrix.target }}/release no
+          shasum -a 256 "$ARCHIVE" > "$ARCHIVE.sha256"
+          echo "ARCHIVE=$ARCHIVE" >> $GITHUB_ENV
+
+      - name: Package (zip)
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          $version = "$env:GITHUB_REF_NAME" -replace '^v', ''
+          $archive = "no-v${version}-${{ matrix.target }}.zip"
+          Compress-Archive -Path "target/${{ matrix.target }}/release/no.exe" -DestinationPath $archive
+          $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLower()
+          "$hash  $archive" | Out-File -Encoding ascii "${archive}.sha256"
+          "ARCHIVE=$archive" | Out-File -Append $env:GITHUB_ENV
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.target }}
+          path: |
+            ${{ env.ARCHIVE }}
+            ${{ env.ARCHIVE }}.sha256
+
+  upload:
+    name: Upload to release
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: binary-*
+          merge-multiple: true
+
+      - name: Generate combined checksums
+        working-directory: artifacts
+        run: |
+          cat *.sha256 > checksums.txt
+          cat checksums.txt
+
+      - name: Upload to GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "$GITHUB_REF_NAME" \
+            artifacts/*.tar.gz artifacts/*.zip artifacts/*.sha256 artifacts/checksums.txt \
+            --clobber
+
+      - name: Notarize macOS binaries
+        env:
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+        run: |
+          KEY_PATH=$RUNNER_TEMP/AuthKey.p8
+          echo "$APPLE_API_KEY_BASE64" | base64 --decode > "$KEY_PATH"
+
+          for archive in artifacts/*apple-darwin*.tar.gz; do
+            echo "Submitting $archive for notarization..."
+            xcrun notarytool submit "$archive" \
+              --key "$KEY_PATH" \
+              --key-id "$APPLE_API_KEY_ID" \
+              --issuer "$APPLE_API_ISSUER_ID" \
+              --wait
+          done
+
+  npm:
+    name: Publish to npm
+    needs: upload
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: binary-*
+          merge-multiple: true
+
+      - name: Extract version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Publish platform packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          declare -A TARGET_MAP=(
+            ["no-darwin-arm64"]="aarch64-apple-darwin"
+            ["no-darwin-x64"]="x86_64-apple-darwin"
+            ["no-linux-arm64"]="aarch64-unknown-linux-gnu"
+            ["no-linux-x64"]="x86_64-unknown-linux-gnu"
+            ["no-linux-arm64-musl"]="aarch64-unknown-linux-musl"
+            ["no-linux-x64-musl"]="x86_64-unknown-linux-musl"
+            ["no-win32-arm64"]="aarch64-pc-windows-msvc"
+            ["no-win32-x64"]="x86_64-pc-windows-msvc"
+          )
+
+          for pkg in "${!TARGET_MAP[@]}"; do
+            target="${TARGET_MAP[$pkg]}"
+            pkg_dir="npm/@network-output/$pkg"
+
+            if [[ "$target" == *windows* ]]; then
+              archive="artifacts/no-v${VERSION}-${target}.zip"
+              unzip -o "$archive" -d "$pkg_dir/"
+            else
+              archive="artifacts/no-v${VERSION}-${target}.tar.gz"
+              tar -xzf "$archive" -C "$pkg_dir/"
+            fi
+
+            cd "$pkg_dir"
+            npm version "$VERSION" --no-git-tag-version --allow-same-version
+            npm publish --provenance --access public
+            cd "$GITHUB_WORKSPACE"
+          done
+
+      - name: Publish root package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          cd npm/network-output
+
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            for (const dep of Object.keys(pkg.optionalDependencies)) {
+              pkg.optionalDependencies[dep] = '$VERSION';
+            }
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+          npm publish --provenance --access public
+
+  homebrew:
+    name: Update Homebrew tap
+    needs: upload
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download checksums from release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" --pattern "checksums.txt" --dir .
+
+      - name: Extract version and checksums
+        run: |
+          echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+          for target in aarch64-apple-darwin x86_64-apple-darwin aarch64-unknown-linux-gnu x86_64-unknown-linux-gnu; do
+            sha=$(grep "no-v.*-${target}.tar.gz" checksums.txt | awk '{print $1}')
+            var_name=$(echo "$target" | tr '-' '_' | tr '[:lower:]' '[:upper:]')
+            echo "SHA_${var_name}=${sha}" >> $GITHUB_ENV
+          done
+
+      - name: Update Homebrew formula
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/network-output/homebrew-tap.git" tap
+          mkdir -p tap/Formula
+
+          cp homebrew/Formula/network-output.rb tap/Formula/network-output.rb
+
+          cd tap
+          sed -i 's/version ".*"/version "'"$VERSION"'"/' Formula/network-output.rb
+
+          declare -A SHA_MAP=(
+            ["aarch64-apple-darwin"]="$SHA_AARCH64_APPLE_DARWIN"
+            ["x86_64-apple-darwin"]="$SHA_X86_64_APPLE_DARWIN"
+            ["aarch64-unknown-linux-gnu"]="$SHA_AARCH64_UNKNOWN_LINUX_GNU"
+            ["x86_64-unknown-linux-gnu"]="$SHA_X86_64_UNKNOWN_LINUX_GNU"
+          )
+
+          for target in "${!SHA_MAP[@]}"; do
+            sha="${SHA_MAP[$target]}"
+            # Replace the PLACEHOLDER on the line following the URL for this target
+            sed -i "/${target}/{ n; s/\"PLACEHOLDER\"/\"${sha}\"/ }" Formula/network-output.rb
+          done
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Formula/network-output.rb
+          git commit -m "Update network-output to $VERSION"
+          git push
