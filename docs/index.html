@@ -8,13 +8,19 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="canonical" href="https://network-output.com/">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="keywords" content="cli, networking, http, websocket, tcp, udp, mqtt, sse, dns, ping, whois, json, terminal, rust, curl alternative, httpie alternative, command line, network tool">
+  <meta name="author" content="network-output">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="network-output">
+  <meta property="og:title" content="NO | Fast, structured networking from the terminal">
   <meta property="og:description" content="Fast, structured networking from the terminal. HTTP, WebSocket, TCP, UDP, DNS, Ping, WHOIS, MQTT, and SSE with consistent JSON output.">
   <meta property="og:image" content="https://network-output.com/og-image.png">
   <meta property="og:url" content="https://network-output.com">
+  <meta property="og:site_name" content="network-output">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="network-output">
+  <meta name="twitter:title" content="NO | Fast, structured networking from the terminal">
   <meta name="twitter:description" content="Fast, structured networking from the terminal. HTTP, WebSocket, TCP, UDP, DNS, Ping, WHOIS, MQTT, and SSE with consistent JSON output.">
   <meta name="twitter:image" content="https://network-output.com/og-image.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,7 +41,7 @@
       --accent-glow: rgba(0, 255, 136, 0.15);
       --accent-dim: rgba(0, 255, 136, 0.6);
       --text: #e0e0e8;
-      --text-muted: #6a6a7a;
+      --text-muted: #8a8a9a;
       --sidebar-width: 260px;
       --font-mono: "JetBrains Mono", monospace;
       --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -56,11 +62,31 @@
       -moz-osx-font-smoothing: grayscale;
     }
 
+    /* ---- Skip link ---- */
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 8px;
+      z-index: 100;
+      transition: top 0.3s;
+      text-decoration: none;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+    }
+
+    .skip-link:focus {
+      top: 0;
+    }
+
     /* ---- Scanlines overlay ---- */
     .scanlines {
       position: fixed;
       top: 0;
       left: 0;
+      will-change: transform;
       width: 100%;
       height: 100%;
       pointer-events: none;
@@ -297,11 +323,14 @@
 
     .hero-install {
       position: relative;
-      display: inline-block;
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
     }
 
     .hero-install-tabs {
       display: flex;
+      justify-content: center;
       gap: 0;
       margin-bottom: 0;
     }
@@ -338,6 +367,12 @@
 
     .hero-install-panel.active {
       display: block;
+      animation: tabFadeIn 0.2s ease;
+    }
+
+    @keyframes tabFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .hero-install code {
@@ -349,6 +384,8 @@
       border-left: 3px solid var(--accent);
       box-shadow: -4px 0 12px var(--accent-glow);
       padding: 1rem 3.5rem 1rem 1.5rem;
+      overflow-x: auto;
+      white-space: nowrap;
       border-radius: 0 6px 6px 6px;
       color: var(--text);
     }
@@ -361,19 +398,21 @@
       justify-content: center;
     }
 
-    .hero-protocols span {
+    .hero-protocols a {
       font-family: var(--font-mono);
       font-size: 0.75rem;
       color: var(--text-muted);
       letter-spacing: 1px;
       text-transform: uppercase;
+      text-decoration: none;
       padding: 0.35rem 0.75rem;
       border: 1px solid var(--border);
       border-radius: 4px;
       transition: all 0.2s ease;
+      cursor: pointer;
     }
 
-    .hero-protocols span:hover {
+    .hero-protocols a:hover {
       border-color: var(--accent);
       color: var(--accent);
       box-shadow: 0 0 8px var(--accent-glow);
@@ -639,6 +678,25 @@
       text-decoration: none;
     }
 
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+
     /* ---- JSON output envelope ---- */
     .envelope-block {
       background: var(--surface);
@@ -739,8 +797,36 @@
     .json-bool { color: #ff8080; }
     .json-null { color: var(--text-muted); }
   </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "no",
+    "alternateName": "network-output",
+    "applicationCategory": "DeveloperApplication",
+    "operatingSystem": "macOS, Linux, Windows",
+    "url": "https://network-output.com",
+    "downloadUrl": "https://github.com/network-output/no/releases",
+    "softwareVersion": "0.1.2",
+    "license": "https://opensource.org/licenses/Apache-2.0",
+    "programmingLanguage": "Rust",
+    "description": "A fast, structured networking CLI for HTTP, WebSocket, TCP, UDP, DNS, Ping, WHOIS, MQTT, and SSE. Machine-readable JSON output, built-in jq filtering, and smart URL inference.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "sourceOrganization": {
+      "@type": "Organization",
+      "name": "network-output",
+      "url": "https://github.com/network-output"
+    }
+  }
+  </script>
 </head>
 <body>
+
+  <a href="#hero" class="skip-link">Skip to content</a>
 
   <!-- Scanlines overlay -->
   <div class="scanlines"></div>
@@ -808,7 +894,9 @@
         <div class="hero-install-tabs">
           <button class="hero-install-tab active" onclick="switchInstallTab('cargo', this)">Cargo</button>
           <button class="hero-install-tab" onclick="switchInstallTab('homebrew', this)">Homebrew</button>
+          <button class="hero-install-tab" onclick="switchInstallTab('npx', this)">npx</button>
           <button class="hero-install-tab" onclick="switchInstallTab('npm', this)">npm</button>
+          <button class="hero-install-tab" onclick="switchInstallTab('scoop', this)">Scoop</button>
         </div>
         <div class="hero-install-panel active" data-tab="cargo">
           <code>$ cargo install network-output</code>
@@ -818,20 +906,30 @@
           <code>$ brew install network-output/tap/network-output</code>
           <button class="copy-btn" onclick="copyText('brew install network-output/tap/network-output', this)" style="opacity: 1;">Copy</button>
         </div>
-        <div class="hero-install-panel" data-tab="npm">
+        <div class="hero-install-panel" data-tab="npx">
           <code>$ npx @network-output/no</code>
           <button class="copy-btn" onclick="copyText('npx @network-output/no', this)" style="opacity: 1;">Copy</button>
         </div>
+        <div class="hero-install-panel" data-tab="npm">
+          <code>$ npm install -g @network-output/no</code>
+          <button class="copy-btn" onclick="copyText('npm install -g @network-output/no', this)" style="opacity: 1;">Copy</button>
+        </div>
+        <div class="hero-install-panel" data-tab="scoop">
+          <code>$ scoop bucket add network-output https://github.com/network-output/scoop-bucket && scoop install no</code>
+          <button class="copy-btn" onclick="copyText('scoop bucket add network-output https://github.com/network-output/scoop-bucket && scoop install no', this)" style="opacity: 1;">Copy</button>
+        </div>
       </div>
       <div class="hero-protocols">
-        <span>HTTP</span>
-        <span>WebSocket</span>
-        <span>TCP</span>
-        <span>UDP</span>
-        <span>DNS</span>
-        <span>MQTT</span>
-        <span>SSE</span>
-        <span>jq</span>
+        <a href="#http">HTTP</a>
+        <a href="#websocket">WebSocket</a>
+        <a href="#tcp">TCP</a>
+        <a href="#udp">UDP</a>
+        <a href="#dns">DNS</a>
+        <a href="#ping">Ping</a>
+        <a href="#whois">WHOIS</a>
+        <a href="#mqtt">MQTT</a>
+        <a href="#sse">SSE</a>
+        <a href="#jq">jq</a>
       </div>
     </section>
 
@@ -1420,6 +1518,13 @@ no http GET http://example.com/api     # -> http://example.com/api</code></pre>
     <!-- Footer -->
     <footer class="site-footer">
       <p>network-output -- built with Rust</p>
+      <div class="footer-links">
+        <a href="https://github.com/network-output/no" target="_blank" rel="noopener noreferrer" aria-label="View source code on GitHub">GitHub</a>
+        <a href="https://crates.io/crates/network-output" target="_blank" rel="noopener noreferrer" aria-label="View package on crates.io">crates.io</a>
+        <a href="https://www.npmjs.com/package/@network-output/no" target="_blank" rel="noopener noreferrer" aria-label="View package on npm">npm</a>
+        <a href="https://github.com/network-output/no/releases" target="_blank" rel="noopener noreferrer" aria-label="Download from GitHub Releases">Releases</a>
+        <a href="https://github.com/network-output/no/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" aria-label="View Apache-2.0 license">Apache-2.0</a>
+      </div>
     </footer>
 
   </main>
@@ -1489,7 +1594,7 @@ no http GET http://example.com/api     # -> http://example.com/api</code></pre>
 
     sections.forEach(function (s) { observer.observe(s.el); });
 
-    // ---- Copy to clipboard ----
+    // ---- Install tabs ----
     function switchInstallTab(tab, btn) {
       document.querySelectorAll(".hero-install-tab").forEach(function (t) {
         t.classList.remove("active");

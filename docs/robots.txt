@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://network-output.com/sitemap.xml
