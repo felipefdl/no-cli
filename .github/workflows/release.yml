@@ -231,21 +231,18 @@ jobs:
             echo "SHA_${var_name}=${sha}" >> $GITHUB_ENV
           done
 
-      - name: Clone tap repo
+      - name: Update Homebrew formula
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/network-output/homebrew-tap.git" tap
-          cd tap
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Update Homebrew formula
-        run: |
           mkdir -p tap/Formula
           cp homebrew/Formula/network-output.rb tap/Formula/network-output.rb
 
           cd tap
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           sed -i 's/version ".*"/version "'"$VERSION"'"/' Formula/network-output.rb
 
           declare -A SHA_MAP=(
@@ -260,26 +257,32 @@ jobs:
             sed -i "/${target}/{ n; s/\"PLACEHOLDER\"/\"${sha}\"/ }" Formula/network-output.rb
           done
 
-      - name: Update Scoop manifest
-        run: |
-          mkdir -p tap/bucket
-          cp scoop/no.json tap/bucket/no.json
+          git add Formula/network-output.rb
+          git commit -m "Update network-output to $VERSION"
+          git push
 
-          cd tap
+      - name: Update Scoop manifest
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/network-output/scoop-bucket.git" scoop-repo
+          cp scoop/no.json scoop-repo/no.json
+
+          cd scoop-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
           node -e "
             const fs = require('fs');
-            const m = JSON.parse(fs.readFileSync('bucket/no.json', 'utf8'));
+            const m = JSON.parse(fs.readFileSync('no.json', 'utf8'));
             m.version = '$VERSION';
             m.architecture['64bit'].url = m.architecture['64bit'].url.replace(/v[0-9.]+/g, 'v$VERSION');
             m.architecture['64bit'].hash = '$SHA_X86_64_PC_WINDOWS_MSVC';
             m.architecture['arm64'].url = m.architecture['arm64'].url.replace(/v[0-9.]+/g, 'v$VERSION');
             m.architecture['arm64'].hash = '$SHA_AARCH64_PC_WINDOWS_MSVC';
-            fs.writeFileSync('bucket/no.json', JSON.stringify(m, null, 2) + '\n');
+            fs.writeFileSync('no.json', JSON.stringify(m, null, 2) + '\n');
           "
 
-      - name: Push updates
-        working-directory: tap
-        run: |
-          git add Formula/network-output.rb bucket/no.json
-          git commit -m "Update network-output to $VERSION"
+          git add no.json
+          git commit -m "Update no to $VERSION"
           git push

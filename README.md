@@ -33,7 +33,7 @@ npm install -g @network-output/no
 ### Scoop (Windows)
 
 ```sh
-scoop bucket add network-output https://github.com/network-output/homebrew-tap
+scoop bucket add network-output https://github.com/network-output/scoop-bucket
 scoop install no
 ```
 
