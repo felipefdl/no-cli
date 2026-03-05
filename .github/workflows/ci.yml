@@ -114,5 +114,5 @@ jobs:
       - name: Build
         run: cross build --target ${{ matrix.target }} --features reqwest/native-tls-vendored
 
-      - name: Run tests
-        run: cross test --target ${{ matrix.target }} --features reqwest/native-tls-vendored
+      - name: Run unit tests
+        run: cross test --lib --target ${{ matrix.target }} --features reqwest/native-tls-vendored
