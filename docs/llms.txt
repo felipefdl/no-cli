@@ -1,0 +1,179 @@
+# no (network-output)
+
+> A fast, structured networking CLI for HTTP, WebSocket, TCP, UDP, MQTT, SSE, DNS, Ping, and WHOIS.
+
+`no` is a Rust-based CLI tool that provides consistent structured JSON output across nine networking protocols. Output is newline-delimited JSON when piped and pretty-printed when interactive. It includes a built-in jq filter, IPv6 support, and automatic URL scheme inference.
+
+- Docs: [network-output.com](https://network-output.com)
+- Source: [github.com/network-output/no](https://github.com/network-output/no)
+- Full reference: [llms-full.txt](https://network-output.com/llms-full.txt)
+
+## Installation
+
+```sh
+cargo install network-output       # Cargo
+brew install network-output/tap/network-output  # Homebrew
+npx @network-output/no             # npm (one-off)
+npm install -g @network-output/no  # npm (global)
+```
+
+Windows (Scoop): `scoop bucket add network-output https://github.com/network-output/scoop-bucket && scoop install no`
+
+## Protocols
+
+### HTTP
+
+```sh
+no http GET https://httpbin.org/get
+no http POST https://api.example.com/data -b '{"key":"value"}' -H "Content-Type:application/json"
+no http GET https://api.example.com --bearer $TOKEN
+no http GET https://api.example.com --basic user:pass
+no http GET https://example.com/file.tar.gz -o file.tar.gz
+no http POST https://api.example.com/upload --stdin
+```
+
+Methods: GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS.
+
+### WebSocket
+
+```sh
+no ws listen ws://localhost:8080
+no ws send ws://localhost:8080 -m "hello"
+```
+
+### TCP
+
+```sh
+no tcp connect localhost:9090 -m "hello"
+no tcp connect [::1]:9090 -m "hello"     # IPv6
+no tcp connect localhost:9090 --stdin
+no tcp listen :9090
+no tcp listen [::]:9090                   # IPv6 listen
+```
+
+### UDP
+
+```sh
+no udp send 127.0.0.1:9090 -m "hello"
+no udp send [::1]:9090 -m "hello"          # IPv6
+no udp send 127.0.0.1:9090 -m "ping" --wait 3s
+no udp listen :9090
+```
+
+### MQTT
+
+Broker address is positional.
+
+```sh
+no mqtt sub localhost:1883 -t "sensor/temp"
+no mqtt pub localhost:1883 -t "sensor/temp" -m '{"value":22.5}'
+```
+
+### SSE (Server-Sent Events)
+
+```sh
+no sse https://example.com/events
+no sse https://example.com/events --bearer $TOKEN
+no sse https://example.com/events -H "X-Custom:value"
+```
+
+### DNS
+
+```sh
+no dns example.com
+no dns example.com AAAA
+no dns google.com MX
+no dns 8.8.8.8                    # auto-detects reverse (PTR) lookup
+no dns example.com --server 1.1.1.1
+```
+
+Record types: A (default), AAAA, MX, TXT, CNAME, NS, SOA, SRV, PTR.
+
+### Ping
+
+```sh
+no ping 127.0.0.1
+no ping ::1                                  # IPv6
+no ping example.com -n 2
+no ping 127.0.0.1 --interval 500ms
+```
+
+### WHOIS
+
+```sh
+no whois example.com
+no whois 8.8.8.8
+no whois example.com --server whois.verisign-grs.com
+```
+
+### jq (Standalone)
+
+```sh
+echo '{"a":1,"b":2}' | no jq '.a'
+no http GET https://httpbin.org/get | no jq '.data.body'
+```
+
+## Global Flags
+
+| Flag | Description |
+|---|---|
+| `--json` | Force JSON output |
+| `--pretty` | Force pretty output |
+| `--timeout <DURATION>` | Request timeout (e.g. `5s`, `300ms`, `1m`) |
+| `--no-color` | Disable colors |
+| `-v, --verbose` | Verbose output with metadata |
+| `-n, --count <N>` | Stop after N data messages (streaming protocols) |
+| `--jq <EXPR>` | Filter output with a jq expression |
+
+The `--jq` flag applies a jq filter to each response envelope. Error responses bypass the filter. String results print raw (no quotes).
+
+```sh
+no --jq '.data.status' http GET https://httpbin.org/get
+no --jq '.data.payload' mqtt sub localhost:1883 -t "sensor/temp"
+```
+
+## Output Format
+
+JSON envelope structure:
+
+```json
+{"type":"response","protocol":"http","timestamp":"2024-01-01T00:00:00.000Z","data":{...}}
+```
+
+| Field | Values |
+|---|---|
+| `type` | `response`, `message`, `connection`, `error` |
+| `protocol` | `http`, `ws`, `tcp`, `udp`, `mqtt`, `sse`, `dns`, `ping`, `whois` |
+| `timestamp` | ISO 8601 UTC with millisecond precision |
+| `data` | Protocol-specific payload |
+| `metadata` | Optional; present with `--verbose` |
+
+Output mode: JSON when piped, pretty when interactive. Override with `--json` or `--pretty`.
+
+## Exit Codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | Connection / DNS / I/O error |
+| 2 | Protocol / TLS error |
+| 3 | Timeout |
+| 4 | Invalid input |
+
+## Environment Variables
+
+| Variable | Description |
+|---|---|
+| `NO_AUTH_TOKEN` | Fallback bearer token for HTTP and SSE requests |
+| `NO_BASIC_AUTH` | Fallback basic auth credentials as `user:pass` |
+
+## URL Normalization
+
+HTTP, WebSocket, and SSE auto-infer scheme when omitted:
+- Local addresses (`localhost`, `127.x.x.x`, `::1`, private ranges) default to `http://` or `ws://`
+- All other hosts default to `https://` or `wss://`
+
+## IPv6
+
+- Protocols with ports (TCP, UDP, MQTT): brackets required -- `[::1]:9090`
+- Portless protocols (Ping, DNS, WHOIS): brackets optional -- `::1` or `[::1]`

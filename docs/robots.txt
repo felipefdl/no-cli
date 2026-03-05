@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://network-output.com/sitemap.xml
+Llms-txt: https://network-output.com/llms.txt
