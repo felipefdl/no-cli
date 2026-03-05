@@ -112,7 +112,7 @@ jobs:
       - uses: taiki-e/install-action@cross
 
       - name: Build
-        run: cross build --target ${{ matrix.target }}
+        run: cross build --target ${{ matrix.target }} --features reqwest/native-tls-vendored
 
       - name: Run tests
-        run: cross test --target ${{ matrix.target }}
+        run: cross test --target ${{ matrix.target }} --features reqwest/native-tls-vendored

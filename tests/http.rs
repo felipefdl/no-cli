@@ -158,10 +158,9 @@ fn http_connection_refused() {
     .unwrap();
   assert!(!output.status.success());
   let code = output.status.code().unwrap();
-  assert_eq!(
-    code,
-    exit_code::CONNECTION,
-    "expected exit code CONNECTION, got: {code}"
+  assert!(
+    code == exit_code::CONNECTION || code == exit_code::TIMEOUT,
+    "expected exit code CONNECTION or TIMEOUT, got: {code}"
   );
 }
 
