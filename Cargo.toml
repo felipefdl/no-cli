@@ -1,6 +1,6 @@
 [package]
 name = "network-output"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 rust-version = "1.85"
 description = "Networking CLI for HTTP, WebSocket, TCP, UDP, DNS, Ping, WHOIS, MQTT, and SSE. Structured JSON output built for machines, readable by humans."
