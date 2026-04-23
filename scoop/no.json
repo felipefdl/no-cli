@@ -1,7 +1,7 @@
 {
   "version": "0.1.2",
   "description": "Fast, structured networking CLI for HTTP, WS, TCP, UDP, DNS, Ping, WHOIS, MQTT, SSE",
-  "homepage": "https://network-output.com",
+  "homepage": "https://network-output.github.io/no",
   "license": "Apache-2.0",
   "architecture": {
     "64bit": {

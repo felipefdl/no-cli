@@ -39,7 +39,6 @@ src/
     whois.rs           -- WHOIS lookup handler (raw TCP to port 43)
 docs/
   index.html           -- Documentation website (single self-contained file, inline CSS + JS)
-  CNAME                -- GitHub Pages custom domain (network-output.com)
 tests/
   helpers/             -- Test infrastructure (servers, CLI helpers)
   http.rs              -- HTTP integration tests (22)
@@ -534,7 +533,7 @@ Exit code 4 on invalid JSON input or invalid jq expression.
 
 ### Website
 
-The documentation site at [network-output.com](https://network-output.com) is a single self-contained HTML file at `docs/index.html` with all CSS and JS inlined. It uses a retromodern CRT aesthetic (dark background, phosphor green accents, scanline overlay). GitHub Pages serves the site from the `docs/` directory on the `main` branch.
+The documentation site at [network-output.github.io/no](https://network-output.github.io/no) is a single self-contained HTML file at `docs/index.html` with all CSS and JS inlined. It uses a retromodern CRT aesthetic (dark background, phosphor green accents, scanline overlay). GitHub Pages serves the site from the `docs/` directory on the `main` branch.
 
 To preview locally:
 

@@ -4,9 +4,9 @@
 
 `no` is a Rust-based CLI tool that provides consistent structured JSON output across nine networking protocols. Output is newline-delimited JSON when piped and pretty-printed when interactive. It includes a built-in jq filter, IPv6 support, and automatic URL scheme inference.
 
-- Docs: [network-output.com](https://network-output.com)
+- Docs: [network-output.github.io/no](https://network-output.github.io/no)
 - Source: [github.com/network-output/no](https://github.com/network-output/no)
-- Full reference: [llms-full.txt](https://network-output.com/llms-full.txt)
+- Full reference: [llms-full.txt](https://network-output.github.io/no/llms-full.txt)
 
 ## Installation
 

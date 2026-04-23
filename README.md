@@ -9,7 +9,7 @@
 
 A fast, structured networking CLI for HTTP, WebSocket, TCP, UDP, MQTT, SSE, DNS, Ping, and WHOIS.
 
-**Docs:** [network-output.com](https://network-output.com)
+**Docs:** [network-output.github.io/no](https://network-output.github.io/no)
 
 ## Installation
 
@@ -204,7 +204,7 @@ JSON output follows a consistent envelope:
 
 ## Documentation
 
-Full documentation is available at [network-output.com](https://network-output.com), covering all protocols, output format, global flags, exit codes, environment variables, and URL normalization rules.
+Full documentation is available at [network-output.github.io/no](https://network-output.github.io/no), covering all protocols, output format, global flags, exit codes, environment variables, and URL normalization rules.
 
 API documentation can be generated with:
 
