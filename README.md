@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-light.svg" />
-    <img src="docs/logo.svg" alt="no" width="246" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/felipefdl/no/main/docs/logo-light.svg" />
+    <img src="https://raw.githubusercontent.com/felipefdl/no/main/docs/logo.svg" alt="no" width="246" />
   </picture>
 </p>
 
